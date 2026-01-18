@@ -1,0 +1,13 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar"
+    ],
+    
+    "code-runner.executorMap": {
+        "groovy": "cd \"C:\\Users\\Samir\\Documents\\practica\\Groovy1\" && groovy -cp \"lib\\cloud.integration.script.apis-2.7.1.jar\" \"$fullFileName\""
+    },
+    
+    "code-runner.runInTerminal": true,
+    "code-runner.saveFileBeforeRun": true,
+    "code-runner.clearPreviousOutput": true
+}

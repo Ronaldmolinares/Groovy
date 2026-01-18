@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Groovy Script",
+            "type": "shell",
+            "command": "groovy",
+            "args": [
+                "-cp",
+                "lib\\cloud.integration.script.apis-2.7.1.jar",
+                "${relativeFile}"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}
