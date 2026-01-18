@@ -57,10 +57,13 @@ def Message processData(Message message) {
     if (nuevo.eventReason.text().toUpperCase() in ["AU05", "CD31"]){
         def serviceManager = new Node(serviceManager0, "ifsend");
 
-            def fecha2 = nuevo.startDate.text().replace("T", " ").replace(".000", "").replace("-","/")
+            def startDate = nuevo.startDate.text().split("T")
+            def fecha = startDate[0].replace("-", "/")
+            def hora = startDate[1].replace(".000", "")
 
             new Node(serviceManager, "Registroecopetrol", anterior.userNav.User.username.text().toUpperCase());
-            new Node(serviceManager, "FechadeshabilitacionApps", fecha2.replace("00:00:00", "05:00:00"));
+            new Node(serviceManager, "FechadeshabilitacionApps", fecha);
+            new Node(serviceManager, "HoradeshabilitacionApps", hora.replace("00:00:00", "05:00:00"));
             new Node(serviceManager, "NombreCompleto", anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text());
             new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
     } else {
@@ -75,9 +78,14 @@ def Message processData(Message message) {
         
         if (camposNoVacios && !consistencia && !mismaPosition){
                     def serviceManager = new Node (serviceManager0, "ifsend");
-                    def fecha2 = nuevo.startDate.text().replace("T", " ").replace(".000", "").replace("-", "/");
+
+                    def startDate = nuevo.startDate.text().split("T")
+                    def fecha = startDate[0].replace("-", "/")
+                    def hora = startDate[1].replace(".000", "")
+
                     new Node(serviceManager, "Registroecopetrol", anterior.userNav.User.username.text().toUpperCase());
-                    new Node(serviceManager, "FechadeshabilitacionApps", fecha2.replace("00:00:00", "05:00:00"));
+                    new Node(serviceManager, "FechadeshabilitacionApps", fecha);
+                    new Node(serviceManager, "HoradeshabilitacionApps", hora.replace("00:00:00", "05:00:00"));
                     new Node(serviceManager, "NombreCompleto", anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text());
                     new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
                 
