@@ -1,6 +1,8 @@
 import com.sap.gateway.ip.core.customdev.util.Message;
 import groovy.util.*;
 import groovy.xml.*;
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 """
 1. Declaramos la firma del método, retorna un objeto Message, recibe como parametro un objeto del mismo tipo.
@@ -57,13 +59,18 @@ def Message processData(Message message) {
     if (nuevo.eventReason.text().toUpperCase() in ["AU05", "CD31"]){
         def serviceManager = new Node(serviceManager0, "ifsend");
 
-            def startDate = nuevo.startDate.text().split("T")
-            def fecha = startDate[0].replace("-", "/")
-            def hora = startDate[1].replace(".000", "")
+            def ldt = LocalDateTime.parse (
+                nuevo.startDate.text(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+            )
+            
+            ldt = ldt.plusHours(5); 
+
+            def fecha = ldt.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+            def hora = ldt.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
 
             new Node(serviceManager, "Registroecopetrol", anterior.userNav.User.username.text().toUpperCase());
             new Node(serviceManager, "FechadeshabilitacionApps", fecha);
-            new Node(serviceManager, "HoradeshabilitacionApps", hora.replace("00:00:00", "05:00:00"));
+            new Node(serviceManager, "HoradeshabilitacionApps", hora);
             new Node(serviceManager, "NombreCompleto", anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text());
             new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
     } else {
@@ -79,16 +86,20 @@ def Message processData(Message message) {
         if (camposNoVacios && !consistencia && !mismaPosition){
                     def serviceManager = new Node (serviceManager0, "ifsend");
 
-                    def startDate = nuevo.startDate.text().split("T")
-                    def fecha = startDate[0].replace("-", "/")
-                    def hora = startDate[1].replace(".000", "")
+                    def ldt = LocalDateTime.parse (
+                        nuevo.startDate.text(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+                    )
+                    
+                    ldt = ldt.plusHours(5); 
+
+                    def fecha = ldt.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+                    def hora = ldt.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
 
                     new Node(serviceManager, "Registroecopetrol", anterior.userNav.User.username.text().toUpperCase());
                     new Node(serviceManager, "FechadeshabilitacionApps", fecha);
-                    new Node(serviceManager, "HoradeshabilitacionApps", hora.replace("00:00:00", "05:00:00"));
+                    new Node(serviceManager, "HoradeshabilitacionApps", hora);
                     new Node(serviceManager, "NombreCompleto", anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text());
                     new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
-                
         }
     }
     
