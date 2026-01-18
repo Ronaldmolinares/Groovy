@@ -1,0 +1,100 @@
+"""
+1. Declaramos la firma del método, retorna un objeto Message, recibe como parametro un objeto del mismo tipo.
+Es el punto de entrada del Groovy Script en SAP CPI, y es invocado automáticamente por la plataforma durante el procesamiento del mensaje.
+"""
+
+def Message processData(Message message){
+
+    """
+    Se obtienen las propiedades del mensaje (Exchange Properties).
+    Se declara map que es de tipo java.util.Map<String, Object>.
+    """
+    def map = message.getProperties();
+
+    """
+    Se obtiene el cuerpo del message y se fuerza a ser de tipo String
+    para que XmlSlurper pueda parsearlo.
+    De manera que body ya contiene todo el XML como String.
+    """
+    def body = message.getBody(java.lang.String) as String;
+
+    """
+    Se Parsea el XML, teniendo un árbol de nodos navegable.
+    """
+    def responses = new XmlSlurper().parseText(body);
+
+    """
+    Se define el XML de salida, inicialmente vacío.
+        null -> no tiene nodo padre.
+        root -> etiqueta raíz del XML de salida.
+    """
+    def serviceManager0 = new Node(null, "root")
+
+    """
+    Se definen los estados anterior y nuevo, ya que el XML
+    contiene exactamente dos nodos EmpJob"""
+    def anterior = responses.EmpJob.EmpJob[0]
+    def nuevo = responses.EmpJob.EmpJob[1]
+
+    """
+    Aplicamos reglas del negocio para generar el XML de salida.
+    1. Si en el estado nuevo en el tag eventReason se encuentra el codigo "AU05" o "CD31" 
+    entonces va a agregar un nodo hijo con el nombre ifsend al XML de salida.
+
+    2. Toma la fecha y modifica el formato.
+
+    3. Añade data al nodo hijo.
+
+    4. Si no entonces Si el nombre y la fecha no estan vacios entonces
+    si hay consistencia entre los estados anterior y nuevo. Si la 
+    posición es diferente entonces 
+
+    """
+    if (nuevo.eventReason.text().toUpperCase() in ["AU05", "CD31"]){
+        def serviceManager = new Node(serviceManager0, "ifsend");
+
+            def fecha2 = nuevo.startDate.text().replace("T", " ").replace(".000", "").replace("-","/")
+
+            new Node(serviceManager, "Registroecopetrol", anterior.userNav.User.username.text().toUpperCase());
+            new Node(serviceManager, "FechadeshabilitacionApps", fecha2.replace("00:00:00", "05:00:00"));
+            new Node(serviceManager, "NombreCompleto", anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text());
+            new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
+    } else {
+        camposNoVacios = !anterior.userNav.User.username.text().equals("") && !nuevo.startDate.text().equals("")
+        if (camposNoVacios){
+            consistencia = nuevo.businessUnit.text() == anterior.businessUnit.text() && 
+                           nuevo.division.text() == anterior.division.text() &&
+                           nuevo.department.text() == anterior.department.text() &&
+                           nuevo.customString2.text() == anterior.customString2.text() &&
+                           nuevo.customString3.text() == anterior.customString3.text() &&
+                           nuevo.customString4.text() == anterior.customString4.text()
+            if (consistencia) {
+                
+            } else {
+                mismaPosicion = nuevo.Position.text() == anterior.positionNav.Position.parentPosition.Position.code.text()
+                if (mismaPosicion) {
+
+                } else {
+                    def serviceManager = new Node (serviceManager0, "ifsend");
+                    def fecha2 = nuevo.startDate.text().replace("T", " ").replace(".000", "").replace("-", "/");
+                    new Node(serviceManager, "Registroecopetrol", anterior.userNav.User.username.text().toUpperCase());
+                    new Node(serviceManager, "FechadeshabilitacionApps", fecha2.replace("00:00:00", "05:00:00"));
+                    new Node(serviceManager, "NombreCompleto", employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text());
+                    new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
+                }
+            }
+        }
+    }
+    
+    """
+    el cuerpo se serializa en el XML de salida y el mensaje 
+    toma ese valor
+    """
+    body = groovy.xml.XmlUtil.serialize(serviceManager0);
+    message.setBody(body);
+
+    def messageLog = messageLogFactory.getMessageLog(message);
+        map = message.getHeaders();
+    
+    return message;
+}

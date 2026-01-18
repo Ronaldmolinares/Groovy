@@ -8,17 +8,24 @@ import groovy.util.*;
 import groovy.xml.*;
 import java.util.Set;
 
-
+"""Punto de entrada, CPI lo llama, es la firma del metodo"""
 def Message processData(Message message) {
-map = message.getProperties();
+map = message.getProperties(); // carga las propiedades del message,
+// map es de tipo java.util.Map<String, Object>, las claves siempre son str
 
-
+//lectura del cuerpo del mensaje, se fuerza a str para que XmlSlurper pueda parsearlo
 def body = message.getBody(java.lang.String) as String;
+// el body ya contiene todo el contenido del XML como texto
 
-
-
- def Responses  = new XmlSlurper().parseText(body);
+// Parseo del input.xml
+ def Responses = new XmlSlurper().parseText(body); // devuelve un arbol de nodos navegable
+ 
+ // Se define el output.xml
  def serviceManager0 = new Node(null, "root");
+ """Inicialmente crea el xml vacio
+null indica que no tiene nodo padre
+root será la etiqueta principal del output.xml
+"""
  
 
 
