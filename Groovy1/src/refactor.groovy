@@ -1,9 +1,13 @@
+import com.sap.gateway.ip.core.customdev.util.Message;
+import groovy.util.*;
+import groovy.xml.*;
+
 """
 1. Declaramos la firma del método, retorna un objeto Message, recibe como parametro un objeto del mismo tipo.
 Es el punto de entrada del Groovy Script en SAP CPI, y es invocado automáticamente por la plataforma durante el procesamiento del mensaje.
 """
 
-def Message processData(Message message){
+def Message processData(Message message) {
 
     """
     Se obtienen las propiedades del mensaje (Exchange Properties).
@@ -60,41 +64,48 @@ def Message processData(Message message){
             new Node(serviceManager, "NombreCompleto", anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text());
             new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
     } else {
-        camposNoVacios = !anterior.userNav.User.username.text().equals("") && !nuevo.startDate.text().equals("")
-        if (camposNoVacios){
-            consistencia = nuevo.businessUnit.text() == anterior.businessUnit.text() && 
-                           nuevo.division.text() == anterior.division.text() &&
-                           nuevo.department.text() == anterior.department.text() &&
-                           nuevo.customString2.text() == anterior.customString2.text() &&
-                           nuevo.customString3.text() == anterior.customString3.text() &&
-                           nuevo.customString4.text() == anterior.customString4.text()
-            if (consistencia) {
-                
-            } else {
-                mismaPosicion = nuevo.Position.text() == anterior.positionNav.Position.parentPosition.Position.code.text()
-                if (mismaPosicion) {
-
-                } else {
+        def camposNoVacios = !anterior.userNav.User.username.text().equals("") && !nuevo.startDate.text().equals("")
+        def consistencia = nuevo.businessUnit.text() == anterior.businessUnit.text() && 
+                nuevo.division.text() == anterior.division.text() &&
+                nuevo.department.text() == anterior.department.text() &&
+                nuevo.customString2.text() == anterior.customString2.text() &&
+                nuevo.customString3.text() == anterior.customString3.text() &&
+                nuevo.customString4.text() == anterior.customString4.text()
+        def mismaPosition = nuevo.Position.text() == anterior.positionNav.Position.parentPosition.Position.code.text()
+        
+        if (camposNoVacios && !consistencia && !mismaPosition){
                     def serviceManager = new Node (serviceManager0, "ifsend");
                     def fecha2 = nuevo.startDate.text().replace("T", " ").replace(".000", "").replace("-", "/");
                     new Node(serviceManager, "Registroecopetrol", anterior.userNav.User.username.text().toUpperCase());
                     new Node(serviceManager, "FechadeshabilitacionApps", fecha2.replace("00:00:00", "05:00:00"));
-                    new Node(serviceManager, "NombreCompleto", employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text());
+                    new Node(serviceManager, "NombreCompleto", anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text());
                     new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
-                }
-            }
+                
         }
     }
     
     """
-    el cuerpo se serializa en el XML de salida y el mensaje 
-    toma ese valor
+    1. Convierte el XML construido en memoria a texto.
+    El cuerpo se serializa en el XML de salida.
+    
+    2. Reemplaza el payload del mensaje.
+    El mensaje toma el valor del XML construido en el script
     """
     body = groovy.xml.XmlUtil.serialize(serviceManager0);
     message.setBody(body);
 
+    """
+    3. Permite loguear el resultado.
+    Permite escribir información en el Message Processing Log de SAP CPI
+    Despues obtiene las cabeceras del mensaje (no influye en el script)
+    """
+
     def messageLog = messageLogFactory.getMessageLog(message);
         map = message.getHeaders();
     
+    """
+    4. Se retorna el Message a CPI para continuar el flujo.
+    Este contiene body modificado, headers y properties intactas.
+    """
     return message;
 }
