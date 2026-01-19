@@ -68,10 +68,19 @@ def Message processData(Message message) {
             def fecha = ldt.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
             def hora = ldt.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
 
+            def nombreCompleto = anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text().split(" ");
+            def primerNombre = nombreCompleto[0];
+            def segundoNombre = nombreCompleto[1];
+            def primerApellido = nombreCompleto[2];
+            def segundoApellido = nombreCompleto[3];
+
             new Node(serviceManager, "Registroecopetrol", anterior.userNav.User.username.text().toUpperCase());
             new Node(serviceManager, "FechadeshabilitacionApps", fecha);
             new Node(serviceManager, "HoradeshabilitacionApps", hora);
-            new Node(serviceManager, "NombreCompleto", anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text());
+            new Node(serviceManager, "PrimerNombre", primerNombre);
+            new Node(serviceManager, "segundoNombre", segundoNombre);
+            new Node(serviceManager, "PrimerApellido", primerApellido);
+            new Node(serviceManager, "SegundoApellido", segundoApellido);
             new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
     } else {
         def camposNoVacios = !anterior.userNav.User.username.text().equals("") && !nuevo.startDate.text().equals("")
