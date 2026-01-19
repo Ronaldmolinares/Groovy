@@ -25,7 +25,7 @@ def Message processData(Message message) {
     def body = message.getBody(java.lang.String) as String;
 
     """
-    Se Parsea el XML, teniendo un árbol de nodos navegable.
+    Se crea la variable para manipular el XML, teniendo un árbol de nodos navegable. (GPathResult)
     """
     def responses = new XmlSlurper().parseText(body);
 
@@ -42,7 +42,7 @@ def Message processData(Message message) {
     def anterior = responses.EmpJob.EmpJob[0]
     def nuevo = responses.EmpJob.EmpJob[1]
 
-    """
+    /*
     Aplicamos reglas del negocio para generar el XML de salida.
     1. Si en el estado nuevo en el tag eventReason se encuentra el codigo "AU05" o "CD31" 
     entonces va a agregar un nodo hijo con el nombre ifsend al XML de salida.
@@ -53,35 +53,10 @@ def Message processData(Message message) {
 
     4. Si no entonces Si el nombre y la fecha no estan vacios entonces
     si hay consistencia entre los estados anterior y nuevo. Si la 
-    posición es diferente entonces 
-
-    """
+    posición es diferente entonces. 
+    */
     if (nuevo.eventReason.text().toUpperCase() in ["AU05", "CD31"]){
-        def serviceManager = new Node(serviceManager0, "ifsend");
-
-            def ldt = LocalDateTime.parse (
-                nuevo.startDate.text(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
-            )
-            
-            ldt = ldt.plusHours(5); 
-
-            def fecha = ldt.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-            def hora = ldt.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-
-            def nombreCompleto = anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text().split(" ");
-            def primerNombre = nombreCompleto[0];
-            def segundoNombre = nombreCompleto[1];
-            def primerApellido = nombreCompleto[2];
-            def segundoApellido = nombreCompleto[3];
-
-            new Node(serviceManager, "Registroecopetrol", anterior.userNav.User.username.text().toUpperCase());
-            new Node(serviceManager, "FechadeshabilitacionApps", fecha);
-            new Node(serviceManager, "HoradeshabilitacionApps", hora);
-            new Node(serviceManager, "PrimerNombre", primerNombre);
-            new Node(serviceManager, "segundoNombre", segundoNombre);
-            new Node(serviceManager, "PrimerApellido", primerApellido);
-            new Node(serviceManager, "SegundoApellido", segundoApellido);
-            new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
+        crearNodo(serviceManager0, anterior, nuevo)
     } else {
         def camposNoVacios = !anterior.userNav.User.username.text().equals("") && !nuevo.startDate.text().equals("")
         def consistencia = nuevo.businessUnit.text() == anterior.businessUnit.text() && 
@@ -93,22 +68,7 @@ def Message processData(Message message) {
         def mismaPosition = nuevo.Position.text() == anterior.positionNav.Position.parentPosition.Position.code.text()
         
         if (camposNoVacios && !consistencia && !mismaPosition){
-                    def serviceManager = new Node (serviceManager0, "ifsend");
-
-                    def ldt = LocalDateTime.parse (
-                        nuevo.startDate.text(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
-                    )
-                    
-                    ldt = ldt.plusHours(5); 
-
-                    def fecha = ldt.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-                    def hora = ldt.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-
-                    new Node(serviceManager, "Registroecopetrol", anterior.userNav.User.username.text().toUpperCase());
-                    new Node(serviceManager, "FechadeshabilitacionApps", fecha);
-                    new Node(serviceManager, "HoradeshabilitacionApps", hora);
-                    new Node(serviceManager, "NombreCompleto", anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text());
-                    new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
+            crearNodo(serviceManager0, anterior, nuevo)  
         }
     }
     
@@ -136,4 +96,32 @@ def Message processData(Message message) {
     Este contiene body modificado, headers y properties intactas.
     """
     return message;
+}
+
+def crearNodo(serviceManager0, anterior, nuevo){
+    def serviceManager = new Node(serviceManager0, "ifsend");
+    def ldt = LocalDateTime.parse (
+        nuevo.startDate.text(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+    )
+            
+    ldt = ldt.plusHours(5); 
+
+    def fecha = ldt.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+    def hora = ldt.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+
+    def nombreCompleto = anterior.employmentNav.EmpEmployment.personNav.PerPerson.personalInfoNav.PerPersonal.formalName.text().split(" ");
+    def primerNombre = nombreCompleto[0];
+    def segundoNombre = nombreCompleto[1];
+    def primerApellido = nombreCompleto[2];
+    def segundoApellido = nombreCompleto[3];
+
+    new Node(serviceManager, "Registroecopetrol", anterior.userNav.User.username.text().toUpperCase());
+    new Node(serviceManager, "FechadeshabilitacionApps", fecha);
+    new Node(serviceManager, "HoradeshabilitacionApps", hora);
+    new Node(serviceManager, "PrimerNombre", primerNombre);
+    new Node(serviceManager, "segundoNombre", segundoNombre);
+    new Node(serviceManager, "PrimerApellido", primerApellido);
+    new Node(serviceManager, "SegundoApellido", segundoApellido);
+    new Node(serviceManager, "TituloPosiciones", "Cumple las condiciones de cambio de Unidad Organizativa y de jefe");
+    
 }
